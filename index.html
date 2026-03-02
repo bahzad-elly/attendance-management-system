@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BAAMS – Beauty & Advanced Attendance Management System</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Arabic:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --bg-primary: #0f0f1a;
+    --bg-secondary: #16162a;
+    --bg-card: #1e1e35;
+    --bg-card-hover: #252540;
+    --border: #2a2a4a;
+    --text-primary: #e8e8ff;
+    --text-secondary: #8888bb;
+    --text-muted: #555588;
+    --accent-blue: #6c63ff;
+    --accent-purple: #9b59b6;
+    --accent-cyan: #00d4ff;
+    --accent-green: #00e676;
+    --accent-orange: #ff9800;
+    --accent-red: #ff4757;
+    --accent-pink: #ff6b9d;
+    --gradient-1: linear-gradient(135deg, #6c63ff, #9b59b6);
+    --gradient-2: linear-gradient(135deg, #00d4ff, #6c63ff);
+    --gradient-3: linear-gradient(135deg, #00e676, #00d4ff);
+    --gradient-4: linear-gradient(135deg, #ff9800, #ff6b9d);
+    --shadow: 0 8px 32px rgba(108, 99, 255, 0.15);
+    --shadow-card: 0 4px 24px rgba(0,0,0,0.4);
+    --sidebar-width: 260px;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  [data-theme="light"] {
+    --bg-primary: #f0f2ff;
+    --bg-secondary: #e8ebff;
+    --bg-card: #ffffff;
+    --bg-card-hover: #f5f6ff;
+    --border: #d0d4f0;
+    --text-primary: #1a1a3e;
+    --text-secondary: #5555aa;
+    --text-muted: #9999cc;
+    --shadow: 0 8px 32px rgba(108, 99, 255, 0.1);
+    --shadow-card: 0 4px 24px rgba(108, 99, 255, 0.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    transition: var(--transition);
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  [data-lang="ku"] body, [data-lang="ku"] * {
+    font-family: 'Noto Sans Arabic', 'Inter', sans-serif;
+    direction: rtl;
+  }
+
+  /* Animated background */
+  .bg-orbs {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.06;
+    animation: orbFloat 8s ease-in-out infinite;
+  }
+  [data-theme="light"] .orb { opacity: 0.12; }
+  .orb-1 { width: 500px; height: 500px; background: var(--accent-blue); top: -200px; left: -150px; animation-delay: 0s; }
+  .orb-2 { width: 400px; height: 400px; background: var(--accent-purple); bottom: -100px; right: -100px; animation-delay: 3s; }
+  .orb-3 { width: 300px; height: 300px; background: var(--accent-cyan); top: 50%; left: 40%; animation-delay: 6s; }
+  @keyframes orbFloat {
+    0%, 100% { transform: translate(0,0) scale(1); }
+    50% { transform: translate(30px, -30px) scale(1.1); }
+  }
+
+  /* Layout */
+  .app { display: flex; min-height: 100vh; position: relative; z-index: 1; }
+
+  /* Sidebar */
+  .sidebar {
+    width: var(--sidebar-width);
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 100;
+    transition: var(--transition);
+    overflow: hidden;
+  }
+  [data-lang="ku"] .sidebar { left: auto; right: 0; border-right: none; border-left: 1px solid var(--border); }
+
+  .sidebar-logo {
+    padding: 24px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo-icon {
+    width: 42px; height: 42px;
+    background: var(--gradient-1);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+    animation: logoPulse 3s ease-in-out infinite;
+  }
+  @keyframes logoPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(108,99,255,0.4); }
+    50% { box-shadow: 0 0 0 12px rgba(108,99,255,0); }
+  }
+  .logo-text { font-size: 15px; font-weight: 800; line-height: 1.2; }
+  .logo-text span { display: block; font-size: 10px; font-weight: 400; color: var(--text-secondary); letter-spacing: 1.5px; text-transform: uppercase; }
+
+  .sidebar-nav { flex: 1; padding: 16px 12px; overflow-y: auto; }
+  .nav-section-title {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 12px 10px 6px;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: var(--transition);
+    margin-bottom: 2px;
+    position: relative;
+    overflow: hidden;
+  }
+  .nav-item::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--gradient-1);
+    opacity: 0;
+    transition: var(--transition);
+  }
+  .nav-item:hover::before, .nav-item.active::before { opacity: 0.12; }
+  .nav-item.active { background: rgba(108,99,255,0.15); }
+  .nav-item.active .nav-icon { color: var(--accent-blue); }
+  .nav-item.active .nav-label { color: var(--text-primary); font-weight: 600; }
+  .nav-icon { font-size: 18px; z-index: 1; width: 20px; text-align: center; transition: var(--transition); }
+  .nav-label { font-size: 13.5px; color: var(--text-secondary); z-index: 1; transition: var(--transition); flex: 1; }
+  .nav-item:hover .nav-label { color: var(--text-primary); }
+  .nav-badge {
+    background: var(--gradient-1);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 10px;
+    z-index: 1;
+  }
+  .active-indicator {
+    position: absolute;
+    right: 0; top: 50%;
+    transform: translateY(-50%);
+    width: 3px; height: 20px;
+    background: var(--gradient-1);
+    border-radius: 2px;
+  }
+  [data-lang="ku"] .active-indicator { right: auto; left: 0; }
+
+  .sidebar-footer {
+    padding: 16px 12px;
+    border-top: 1px solid var(--border);
+  }
+  .user-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border-radius: 12px;
+    background: var(--bg-card);
+    cursor: pointer;
+    transition: var(--transition);
+  }
+  .user-card:hover { background: var(--bg-card-hover); }
+  .user-avatar {
+    width: 36px; height: 36px;
+    background: var(--gradient-1);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .user-info { flex: 1; }
+  .user-name { font-size: 13px; font-weight: 600; }
+  .user-role { font-size: 11px; color: var(--text-secondary); }
+
+  /* Main Content */
+  .main {
+    margin-left: var(--sidebar-width);
+    flex: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    transition: var(--transition);
+  }
+  [data-lang="ku"] .main { margin-left: 0; margin-right: var(--sidebar-width); }
+
+  /* Topbar */
+  .topbar {
+    height: 64px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 28px;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    backdrop-filter: blur(20px);
+  }
+  .topbar-title { font-size: 18px; font-weight: 700; flex: 1; }
+  .topbar-subtitle { font-size: 12px; color: var(--text-secondary); font-weight: 400; }
+  .topbar-actions { display: flex; align-items: center; gap: 10px; }
+
+  .btn-icon {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    transition: var(--transition);
+  }
+  .btn-icon:hover { background: var(--bg-card-hover); color: var(--text-primary); border-color: var(--accent-blue); }
+
+  .lang-toggle {
+    display: flex;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .lang-btn {
+    padding: 7px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    color: var(--text-secondary);
+    background: transparent;
+    border: none;
+  }
+  .lang-btn.active { background: var(--gradient-1); color: white; }
+
+  .notification-dot {
+    position: relative;
+  }
+  .notification-dot::after {
+    content: '';
+    position: absolute;
+    top: 6px; right: 6px;
+    width: 8px; height: 8px;
+    background: var(--accent-red);
+    border-radius: 50%;
+    border: 2px solid var(--bg-secondary);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+  }
+
+  /* Content */
+  .content { padding: 28px; flex: 1; }
+
+  /* Stats Grid */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px;
+    cursor: pointer;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+    animation: fadeInUp 0.5s ease both;
+  }
+  .stat-card:nth-child(1) { animation-delay: 0.1s; }
+  .stat-card:nth-child(2) { animation-delay: 0.15s; }
+  .stat-card:nth-child(3) { animation-delay: 0.2s; }
+  .stat-card:nth-child(4) { animation-delay: 0.25s; }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .stat-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    transition: var(--transition);
+    opacity: 0;
+  }
+  .stat-card.c1::after { background: var(--gradient-1); }
+  .stat-card.c2::after { background: var(--gradient-2); }
+  .stat-card.c3::after { background: var(--gradient-3); }
+  .stat-card.c4::after { background: var(--gradient-4); }
+  .stat-card:hover::after { opacity: 1; }
+  .stat-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); border-color: rgba(108,99,255,0.3); }
+
+  .stat-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; }
+  .stat-icon-wrap {
+    width: 48px; height: 48px;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+  }
+  .stat-icon-wrap.c1 { background: rgba(108,99,255,0.15); }
+  .stat-icon-wrap.c2 { background: rgba(0,212,255,0.12); }
+  .stat-icon-wrap.c3 { background: rgba(0,230,118,0.12); }
+  .stat-icon-wrap.c4 { background: rgba(255,152,0,0.12); }
+  .stat-change {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+  .stat-change.up { background: rgba(0,230,118,0.12); color: var(--accent-green); }
+  .stat-change.down { background: rgba(255,71,87,0.12); color: var(--accent-red); }
+  .stat-value { font-size: 32px; font-weight: 800; line-height: 1; margin-bottom: 6px; }
+  .stat-label { font-size: 13px; color: var(--text-secondary); }
+  .stat-subtext { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+  /* Mini progress bar inside stat card */
+  .stat-progress { margin-top: 14px; }
+  .stat-progress-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .stat-progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .stat-progress-fill.c1 { background: var(--gradient-1); }
+  .stat-progress-fill.c2 { background: var(--gradient-2); }
+  .stat-progress-fill.c3 { background: var(--gradient-3); }
+  .stat-progress-fill.c4 { background: var(--gradient-4); }
+
+  /* Grid layout */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 24px; }
+  .grid-3 { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 18px; margin-bottom: 24px; }
+  .grid-2-1 { display: grid; grid-template-columns: 1fr 1.5fr; gap: 18px; margin-bottom: 24px; }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px;
+    animation: fadeInUp 0.5s ease both;
+    transition: var(--transition);
+  }
+  .card:hover { border-color: rgba(108,99,255,0.2); }
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .card-title { font-size: 15px; font-weight: 700; }
+  .card-subtitle { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+  .card-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: rgba(108,99,255,0.15);
+    color: var(--accent-blue);
+  }
+
+  /* Attendance chart */
+  .chart-container { position: relative; }
+  .bar-chart { display: flex; align-items: flex-end; gap: 10px; height: 140px; margin-bottom: 10px; }
+  .bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .bars { display: flex; gap: 3px; align-items: flex-end; width: 100%; justify-content: center; }
+  .bar {
+    width: 14px;
+    border-radius: 4px 4px 0 0;
+    transition: height 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    position: relative;
+  }
+  .bar:hover::after {
+    content: attr(data-val);
+    position: absolute;
+    bottom: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    padding: 3px 7px;
+    border-radius: 6px;
+    font-size: 10px;
+    white-space: nowrap;
+    color: var(--text-primary);
+    z-index: 10;
+  }
+  .bar.present { background: var(--gradient-3); }
+  .bar.absent { background: var(--gradient-4); }
+  .bar.late { background: var(--gradient-2); }
+  .bar-label { font-size: 10px; color: var(--text-muted); }
+
+  .chart-legend { display: flex; gap: 16px; margin-top: 12px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .legend-dot.present { background: var(--accent-green); }
+  .legend-dot.absent { background: var(--accent-orange); }
+  .legend-dot.late { background: var(--accent-cyan); }
+
+  /* Donut chart */
+  .donut-wrap { display: flex; align-items: center; gap: 24px; }
+  .donut-svg { width: 110px; height: 110px; flex-shrink: 0; }
+  circle.track { fill: none; stroke: var(--border); stroke-width: 14; }
+  circle.fill-green { fill: none; stroke: #00e676; stroke-width: 14; stroke-linecap: round; stroke-dasharray: 280; stroke-dashoffset: 280; transition: stroke-dashoffset 1.5s ease; transform: rotate(-90deg); transform-origin: 55px 55px; }
+  circle.fill-red { fill: none; stroke: #ff4757; stroke-width: 14; stroke-linecap: round; stroke-dasharray: 280; stroke-dashoffset: 280; transition: stroke-dashoffset 1.5s ease; transform: rotate(-90deg); transform-origin: 55px 55px; }
+  circle.fill-blue { fill: none; stroke: #00d4ff; stroke-width: 14; stroke-linecap: round; stroke-dasharray: 280; stroke-dashoffset: 280; transition: stroke-dashoffset 1.5s ease; transform: rotate(-90deg); transform-origin: 55px 55px; }
+  .donut-center { position: relative; display: flex; justify-content: center; align-items: center; }
+  .donut-label { position: absolute; text-align: center; }
+  .donut-percent { font-size: 20px; font-weight: 800; }
+  .donut-sub { font-size: 9px; color: var(--text-muted); }
+  .donut-stats { flex: 1; }
+  .donut-stat { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .donut-stat:last-child { border-bottom: none; }
+  .donut-stat-label { font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; gap: 8px; }
+  .donut-stat-val { font-size: 14px; font-weight: 700; }
+
+  /* Recent Table */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    text-align: left;
+    padding: 10px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 1px solid var(--border);
+  }
+  [data-lang="ku"] thead th { text-align: right; }
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: var(--transition);
+    animation: fadeInUp 0.4s ease both;
+  }
+  tbody tr:hover { background: var(--bg-card-hover); }
+  tbody td {
+    padding: 12px 14px;
+    font-size: 13px;
+  }
+  .td-name { display: flex; align-items: center; gap: 10px; }
+  .td-avatar {
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: white;
+    flex-shrink: 0;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .badge.present { background: rgba(0,230,118,0.12); color: var(--accent-green); }
+  .badge.absent { background: rgba(255,71,87,0.12); color: var(--accent-red); }
+  .badge.late { background: rgba(255,152,0,0.12); color: var(--accent-orange); }
+  .badge.admin { background: rgba(108,99,255,0.15); color: var(--accent-blue); }
+  .badge.teacher { background: rgba(0,212,255,0.12); color: var(--accent-cyan); }
+  .badge.student { background: rgba(0,230,118,0.12); color: var(--accent-green); }
+
+  /* Flowchart */
+  .flowchart-wrap {
+    overflow-x: auto;
+    padding-bottom: 10px;
+  }
+  .flowchart {
+    display: flex;
+    gap: 0;
+    align-items: flex-start;
+    min-width: 700px;
+    padding: 10px 0;
+  }
+  .flow-actor {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    position: relative;
+  }
+  .flow-actor-title {
+    font-size: 13px;
+    font-weight: 700;
+    padding: 8px 18px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+    color: white;
+    text-align: center;
+  }
+  .flow-actor-title.blue { background: var(--gradient-1); }
+  .flow-actor-title.cyan { background: var(--gradient-2); }
+  .flow-actor-title.green { background: var(--gradient-3); color: #0a2a1a; }
+
+  .flow-steps { display: flex; flex-direction: column; align-items: center; gap: 0; width: 100%; }
+  .flow-step {
+    background: var(--bg-card-hover);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 9px 12px;
+    font-size: 12px;
+    text-align: center;
+    width: 85%;
+    transition: var(--transition);
+    cursor: default;
+    position: relative;
+    animation: fadeInUp 0.4s ease both;
+  }
+  .flow-step:hover {
+    border-color: var(--accent-blue);
+    background: rgba(108,99,255,0.1);
+    transform: scale(1.03);
+  }
+  .flow-arrow {
+    width: 2px;
+    height: 20px;
+    background: var(--border);
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .flow-arrow::after {
+    content: '▼';
+    font-size: 8px;
+    color: var(--text-muted);
+    margin-bottom: -4px;
+  }
+  .flow-connector {
+    position: absolute;
+    top: 30px;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent 0%, var(--border) 20%, var(--border) 80%, transparent 100%);
+    pointer-events: none;
+  }
+  .flow-divider {
+    width: 1px;
+    background: var(--border);
+    margin: 0 12px;
+    align-self: stretch;
+  }
+
+  /* Module boxes */
+  .module-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 24px; }
+  .module-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+    transition: var(--transition);
+    cursor: pointer;
+    animation: fadeInUp 0.5s ease both;
+  }
+  .module-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); border-color: rgba(108,99,255,0.3); }
+  .module-icon { font-size: 28px; margin-bottom: 10px; }
+  .module-title { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+  .module-features { list-style: none; }
+  .module-features li {
+    font-size: 11.5px;
+    color: var(--text-secondary);
+    padding: 3px 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .module-features li::before { content: '→'; color: var(--accent-blue); font-size: 10px; }
+  [data-lang="ku"] .module-features li::before { content: '←'; }
+
+  /* Performance radar */
+  .perf-bars { display: flex; flex-direction: column; gap: 12px; }
+  .perf-bar-item { display: flex; align-items: center; gap: 12px; }
+  .perf-label { font-size: 12px; color: var(--text-secondary); width: 70px; flex-shrink: 0; }
+  .perf-track { flex: 1; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+  .perf-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .perf-val { font-size: 12px; font-weight: 700; width: 35px; text-align: right; }
+
+  /* Timeline */
+  .timeline { display: flex; flex-direction: column; gap: 0; }
+  .timeline-item { display: flex; gap: 14px; padding-bottom: 18px; position: relative; }
+  .timeline-item:last-child { padding-bottom: 0; }
+  .timeline-left { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+  .timeline-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    border: 2px solid var(--accent-blue);
+    background: var(--bg-card);
+    position: relative;
+    z-index: 1;
+    margin-top: 3px;
+  }
+  .timeline-dot.green { border-color: var(--accent-green); }
+  .timeline-dot.orange { border-color: var(--accent-orange); }
+  .timeline-dot.red { border-color: var(--accent-red); }
+  .timeline-line { flex: 1; width: 2px; background: var(--border); margin-top: 4px; }
+  .timeline-item:last-child .timeline-line { display: none; }
+  .timeline-content { flex: 1; }
+  .timeline-text { font-size: 13px; margin-bottom: 2px; }
+  .timeline-time { font-size: 11px; color: var(--text-muted); }
+
+  /* Quick actions */
+  .quick-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .quick-btn {
+    background: var(--bg-card-hover);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+  .quick-btn:hover {
+    border-color: var(--accent-blue);
+    background: rgba(108,99,255,0.1);
+    transform: scale(1.02);
+  }
+  .quick-btn-icon { font-size: 20px; }
+
+  /* Section header */
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .section-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+  .section-title {
+    font-size: 16px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+  /* Responsive */
+  @media (max-width: 1100px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .grid-3 { grid-template-columns: 1fr 1fr; }
+    .module-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 800px) {
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .grid-2, .grid-2-1 { grid-template-columns: 1fr; }
+    .grid-3 { grid-template-columns: 1fr; }
+    .module-grid { grid-template-columns: 1fr; }
+  }
+
+  /* Animated number counter */
+  .counter { display: inline-block; }
+
+  /* Online status */
+  .online-dot { width: 8px; height: 8px; background: var(--accent-green); border-radius: 50%; animation: pulse 2s infinite; }
+
+  /* Tag */
+  .tag {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-weight: 600;
+    background: var(--bg-card-hover);
+    color: var(--text-muted);
+  }
+</style>
+</head>
+<body>
+<div class="bg-orbs">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+</div>
+
+<div class="app">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">📋</div>
+      <div class="logo-text">
+        BAAMS
+        <span id="logoSubtext">Attendance Management</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-title" data-en="OVERVIEW" data-ku="گشتی">OVERVIEW</div>
+
+      <div class="nav-item active" onclick="setActive(this)">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label" data-en="Dashboard" data-ku="داشبۆرد">Dashboard</span>
+        <div class="active-indicator"></div>
+      </div>
+
+      <div class="nav-section-title" data-en="MODULES" data-ku="بەشەکان">MODULES</div>
+
+      <div class="nav-item" onclick="setActive(this)">
+        <span class="nav-icon">👨‍🏫</span>
+        <span class="nav-label" data-en="Teacher Panel" data-ku="پانێلی مامۆستا">Teacher Panel</span>
+      </div>
+      <div class="nav-item" onclick="setActive(this)">
+        <span class="nav-icon">🎓</span>
+        <span class="nav-label" data-en="Student Portal" data-ku="دەرگای قوتابی">Student Portal</span>
+      </div>
+      <div class="nav-item" onclick="setActive(this)">
+        <span class="nav-icon">🛡️</span>
+        <span class="nav-label" data-en="Admin Center" data-ku="ناوەندی بەڕێوەبەر">Admin Center</span>
+      </div>
+
+      <div class="nav-section-title" data-en="MANAGEMENT" data-ku="بەڕێوەبردن">MANAGEMENT</div>
+
+      <div class="nav-item" onclick="setActive(this)">
+        <span class="nav-icon">🏫</span>
+        <span class="nav-label" data-en="Classrooms" data-ku="پۆلەکان">Classrooms</span>
+        <span class="nav-badge">12</span>
+      </div>
+      <div class="nav-item" onclick="setActive(this)">
+        <span class="nav-icon">✅</span>
+        <span class="nav-label" data-en="Attendance" data-ku="ئامادەبوون">Attendance</span>
+      </div>
+      <div class="nav-item" onclick="setActive(this)">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label" data-en="Grades" data-ku="نمرەکان">Grades</span>
+      </div>
+      <div class="nav-item" onclick="setActive(this)">
+        <span class="nav-icon">📈</span>
+        <span class="nav-label" data-en="Reports" data-ku="ڕاپۆرتەکان">Reports</span>
+        <span class="nav-badge">3</span>
+      </div>
+
+      <div class="nav-section-title" data-en="SYSTEM" data-ku="سیستەم">SYSTEM</div>
+
+      <div class="nav-item" onclick="setActive(this)">
+        <span class="nav-icon">🔒</span>
+        <span class="nav-label" data-en="Security" data-ku="ئەمنیەت">Security</span>
+      </div>
+      <div class="nav-item" onclick="setActive(this)">
+        <span class="nav-icon">💾</span>
+        <span class="nav-label" data-en="Backup DB" data-ku="پاراستەوەی داتا">Backup DB</span>
+      </div>
+      <div class="nav-item" onclick="setActive(this)">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-label" data-en="Settings" data-ku="ڕێکخستنەکان">Settings</span>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar">👤</div>
+        <div class="user-info">
+          <div class="user-name" data-en="Admin User" data-ku="بەڕێوەبەر">Admin User</div>
+          <div class="user-role" style="display:flex;align-items:center;gap:5px;">
+            <div class="online-dot"></div>
+            <span data-en="Super Admin" data-ku="بەڕێوەبەری سەرەکی">Super Admin</span>
+          </div>
+        </div>
+        <span>⋯</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <!-- Topbar -->
+    <div class="topbar">
+      <div>
+        <div class="topbar-title" data-en="Dashboard Overview" data-ku="تێڕوانینی داشبۆرد">Dashboard Overview</div>
+        <div class="topbar-subtitle" id="dateDisplay"></div>
+      </div>
+      <div class="topbar-actions">
+        <div class="lang-toggle">
+          <button class="lang-btn active" onclick="setLang('en')">EN</button>
+          <button class="lang-btn" onclick="setLang('ku')">KU</button>
+        </div>
+        <button class="btn-icon notification-dot" title="Notifications">🔔</button>
+        <button class="btn-icon" onclick="toggleTheme()" id="themeBtn" title="Toggle Theme">🌙</button>
+        <button class="btn-icon" title="Search">🔍</button>
+        <button class="btn-icon" title="Full Screen">⛶</button>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card c1">
+          <div class="stat-header">
+            <div class="stat-icon-wrap c1">🎓</div>
+            <div class="stat-change up">↑ 8%</div>
+          </div>
+          <div class="stat-value counter" data-target="1248">0</div>
+          <div class="stat-label" data-en="Total Students" data-ku="کۆی قوتابیان">Total Students</div>
+          <div class="stat-subtext" data-en="Across 12 classrooms" data-ku="لە ١٢ پۆل">Across 12 classrooms</div>
+          <div class="stat-progress">
+            <div class="stat-progress-bar"><div class="stat-progress-fill c1" style="width:0" data-width="78%"></div></div>
+          </div>
+        </div>
+        <div class="stat-card c2">
+          <div class="stat-header">
+            <div class="stat-icon-wrap c2">👨‍🏫</div>
+            <div class="stat-change up">↑ 3%</div>
+          </div>
+          <div class="stat-value counter" data-target="86">0</div>
+          <div class="stat-label" data-en="Total Teachers" data-ku="کۆی مامۆستایان">Total Teachers</div>
+          <div class="stat-subtext" data-en="Active this semester" data-ku="چالاک ئەم ترمە">Active this semester</div>
+          <div class="stat-progress">
+            <div class="stat-progress-bar"><div class="stat-progress-fill c2" style="width:0" data-width="92%"></div></div>
+          </div>
+        </div>
+        <div class="stat-card c3">
+          <div class="stat-header">
+            <div class="stat-icon-wrap c3">✅</div>
+            <div class="stat-change up">↑ 5%</div>
+          </div>
+          <div class="stat-value counter" data-target="94">0</div>
+          <div class="stat-label" data-en="Attendance Rate %" data-ku="ڕێژەی ئامادەبوون ٪">Attendance Rate %</div>
+          <div class="stat-subtext" data-en="Today's average" data-ku="تێکڕای ئەمڕۆ">Today's average</div>
+          <div class="stat-progress">
+            <div class="stat-progress-bar"><div class="stat-progress-fill c3" style="width:0" data-width="94%"></div></div>
+          </div>
+        </div>
+        <div class="stat-card c4">
+          <div class="stat-header">
+            <div class="stat-icon-wrap c4">📊</div>
+            <div class="stat-change down">↓ 2%</div>
+          </div>
+          <div class="stat-value counter" data-target="87">0</div>
+          <div class="stat-label" data-en="Avg Grade Score" data-ku="تێکڕای نمرە">Avg Grade Score</div>
+          <div class="stat-subtext" data-en="Out of 100 points" data-ku="لە ١٠٠ نمرە">Out of 100 points</div>
+          <div class="stat-progress">
+            <div class="stat-progress-bar"><div class="stat-progress-fill c4" style="width:0" data-width="87%"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 2: Bar Chart + Donut -->
+      <div class="grid-2">
+        <div class="card" style="animation-delay:0.3s">
+          <div class="card-header">
+            <div>
+              <div class="card-title" data-en="Weekly Attendance" data-ku="ئامادەبوونی هەفتانە">Weekly Attendance</div>
+              <div class="card-subtitle" data-en="Present / Absent / Late" data-ku="ئامادە / نەبوو / دواکەوتوو">Present / Absent / Late</div>
+            </div>
+            <div class="card-badge" data-en="This Week" data-ku="ئەم هەفتەیە">This Week</div>
+          </div>
+          <div class="bar-chart" id="barChart">
+            <!-- JS generated -->
+          </div>
+          <div class="chart-legend">
+            <div class="legend-item"><div class="legend-dot present"></div><span data-en="Present" data-ku="ئامادە">Present</span></div>
+            <div class="legend-item"><div class="legend-dot absent"></div><span data-en="Absent" data-ku="نەبوو">Absent</span></div>
+            <div class="legend-item"><div class="legend-dot late"></div><span data-en="Late" data-ku="دواکەوتوو">Late</span></div>
+          </div>
+        </div>
+
+        <div class="card" style="animation-delay:0.35s">
+          <div class="card-header">
+            <div>
+              <div class="card-title" data-en="Today's Attendance" data-ku="ئامادەبوونی ئەمڕۆ">Today's Attendance</div>
+              <div class="card-subtitle" data-en="Real-time distribution" data-ku="دابەشکردنی ئێستا">Real-time distribution</div>
+            </div>
+          </div>
+          <div class="donut-wrap">
+            <div style="position:relative">
+              <svg class="donut-svg" viewBox="0 0 110 110">
+                <circle class="track" cx="55" cy="55" r="44"/>
+                <circle class="fill-green" id="donutPresent" cx="55" cy="55" r="44"/>
+              </svg>
+              <div class="donut-label" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center">
+                <div class="donut-percent">94%</div>
+                <div class="donut-sub" data-en="Present" data-ku="ئامادە">Present</div>
+              </div>
+            </div>
+            <div class="donut-stats">
+              <div class="donut-stat">
+                <div class="donut-stat-label"><div class="legend-dot present"></div><span data-en="Present" data-ku="ئامادە">Present</span></div>
+                <div class="donut-stat-val" style="color:var(--accent-green)">1173</div>
+              </div>
+              <div class="donut-stat">
+                <div class="donut-stat-label"><div class="legend-dot absent"></div><span data-en="Absent" data-ku="نەبوو">Absent</span></div>
+                <div class="donut-stat-val" style="color:var(--accent-orange)">50</div>
+              </div>
+              <div class="donut-stat">
+                <div class="donut-stat-label"><div class="legend-dot late"></div><span data-en="Late" data-ku="دواکەوتوو">Late</span></div>
+                <div class="donut-stat-val" style="color:var(--accent-cyan)">25</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- System Modules -->
+      <div class="section-header">
+        <div class="section-title">📦 <span data-en="System Modules" data-ku="مۆدیوولەکانی سیستەم">System Modules</span></div>
+        <div class="section-line"></div>
+      </div>
+      <div class="module-grid" style="margin-bottom:24px">
+        <div class="module-card" style="animation-delay:0.4s;border-top:3px solid var(--accent-blue)">
+          <div class="module-icon">👨‍🏫</div>
+          <div class="module-title" data-en="Teacher Module" data-ku="مۆدیوولی مامۆستا">Teacher Module</div>
+          <ul class="module-features">
+            <li data-en="Register / Login" data-ku="تۆمارکردن / چوونەژوورەوە">Register / Login</li>
+            <li data-en="Create/Edit/Delete Classroom" data-ku="دروستکردن/دەستکاری/سڕینەوەی پۆل">Create/Edit/Delete Classroom</li>
+            <li data-en="Add Students" data-ku="زیادکردنی قوتابی">Add Students</li>
+            <li data-en="Mark Attendance" data-ku="تۆمارکردنی ئامادەبوون">Mark Attendance</li>
+            <li data-en="Assign Grades (Exam/Quiz)" data-ku="دانانی نمرە (تاقیکردنەوە/کوێز)">Assign Grades (Exam/Quiz)</li>
+            <li data-en="Generate Reports" data-ku="دروستکردنی ڕاپۆرت">Generate Reports</li>
+          </ul>
+        </div>
+        <div class="module-card" style="animation-delay:0.45s;border-top:3px solid var(--accent-cyan)">
+          <div class="module-icon">🎓</div>
+          <div class="module-title" data-en="Student Module" data-ku="مۆدیوولی قوتابی">Student Module</div>
+          <ul class="module-features">
+            <li data-en="Secure Login" data-ku="چوونەژوورەوەی پارێزراو">Secure Login</li>
+            <li data-en="View Attendance Records" data-ku="بینینی تۆمارەکانی ئامادەبوون">View Attendance Records</li>
+            <li data-en="View Grades" data-ku="بینینی نمرەکان">View Grades</li>
+            <li data-en="View Performance Report" data-ku="بینینی ڕاپۆرتی ئەنجام">View Performance Report</li>
+          </ul>
+        </div>
+        <div class="module-card" style="animation-delay:0.5s;border-top:3px solid var(--accent-purple)">
+          <div class="module-icon">🛡️</div>
+          <div class="module-title" data-en="Admin Module" data-ku="مۆدیوولی بەڕێوەبەر">Admin Module</div>
+          <ul class="module-features">
+            <li data-en="Manage Teachers" data-ku="بەڕێوەبردنی مامۆستایان">Manage Teachers</li>
+            <li data-en="Manage Students" data-ku="بەڕێوەبردنی قوتابیان">Manage Students</li>
+            <li data-en="Database Backup" data-ku="پاراستەوەی بنکەی داتا">Database Backup</li>
+            <li data-en="System Settings" data-ku="ڕێکخستنەکانی سیستەم">System Settings</li>
+            <li data-en="Role-Based Access Control" data-ku="کۆنترۆلی دەستگەیشتن">Role-Based Access Control</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Flowchart -->
+      <div class="section-header">
+        <div class="section-title">🔀 <span data-en="System Flowchart – Use Case Diagram" data-ku="چارتی سیستەم – دیاگرامی بەکارهێنان">System Flowchart – Use Case Diagram</span></div>
+        <div class="section-line"></div>
+      </div>
+      <div class="card" style="margin-bottom:24px;animation-delay:0.55s">
+        <div class="flowchart-wrap">
+          <div class="flowchart">
+            <!-- Teacher -->
+            <div class="flow-actor">
+              <div class="flow-actor-title blue" data-en="👨‍🏫 Teacher" data-ku="👨‍🏫 مامۆستا">👨‍🏫 Teacher</div>
+              <div class="flow-steps">
+                <div class="flow-step" style="border-color:rgba(108,99,255,0.4);animation-delay:0.1s" data-en="🔐 Login" data-ku="🔐 چوونەژوورەوە">🔐 Login</div>
+                <div class="flow-arrow"></div>
+                <div class="flow-step" style="animation-delay:0.15s" data-en="🏫 Create Classroom" data-ku="🏫 دروستکردنی پۆل">🏫 Create Classroom</div>
+                <div class="flow-arrow"></div>
+                <div class="flow-step" style="animation-delay:0.2s" data-en="➕ Add Students" data-ku="➕ زیادکردنی قوتابی">➕ Add Students</div>
+                <div class="flow-arrow"></div>
+                <div class="flow-step" style="animation-delay:0.25s" data-en="✅ Mark Attendance" data-ku="✅ تۆمارکردنی ئامادەبوون">✅ Mark Attendance</div>
+                <div class="flow-arrow"></div>
+                <div class="flow-step" style="animation-delay:0.3s" data-en="📊 Assign Grades" data-ku="📊 دانانی نمرە">📊 Assign Grades</div>
+                <div class="flow-arrow"></div>
+                <div class="flow-step" style="animation-delay:0.35s" data-en="📋 Generate Report" data-ku="📋 دروستکردنی ڕاپۆرت">📋 Generate Report</div>
+              </div>
+            </div>
+
+            <div class="flow-divider"></div>
+
+            <!-- Student -->
+            <div class="flow-actor">
+              <div class="flow-actor-title cyan" data-en="🎓 Student" data-ku="🎓 قوتابی">🎓 Student</div>
+              <div class="flow-steps">
+                <div class="flow-step" style="border-color:rgba(0,212,255,0.4);animation-delay:0.1s" data-en="🔐 Login" data-ku="🔐 چوونەژوورەوە">🔐 Login</div>
+                <div class="flow-arrow"></div>
+                <div class="flow-step" style="animation-delay:0.15s" data-en="📅 View Attendance" data-ku="📅 بینینی ئامادەبوون">📅 View Attendance</div>
+                <div class="flow-arrow"></div>
+                <div class="flow-step" style="animation-delay:0.2s" data-en="📊 View Grades" data-ku="📊 بینینی نمرەکان">📊 View Grades</div>
+                <div class="flow-arrow"></div>
+                <div class="flow-step" style="animation-delay:0.25s" data-en="📈 View Performance" data-ku="📈 بینینی ئەنجام">📈 View Performance</div>
+              </div>
+            </div>
+
+            <div class="flow-divider"></div>
+
+            <!-- Admin -->
+            <div class="flow-actor">
+              <div class="flow-actor-title" style="background:var(--gradient-1)" data-en="🛡️ Admin" data-ku="🛡️ بەڕێوەبەر">🛡️ Admin</div>
+              <div class="flow-steps">
+                <div class="flow-step" style="border-color:rgba(155,89,182,0.4);animation-delay:0.1s" data-en="🔐 Login" data-ku="🔐 چوونەژوورەوە">🔐 Login</div>
+                <div class="flow-arrow"></div>
+                <div class="flow-step" style="animation-delay:0.15s" data-en="👥 Manage Users" data-ku="👥 بەڕێوەبردنی بەکارهێنەران">👥 Manage Users</div>
+                <div class="flow-arrow"></div>
+                <div class="flow-step" style="animation-delay:0.2s" data-en="⚙️ System Settings" data-ku="⚙️ ڕێکخستنەکانی سیستەم">⚙️ System Settings</div>
+                <div class="flow-arrow"></div>
+                <div class="flow-step" style="animation-delay:0.25s" data-en="💾 Backup Database" data-ku="💾 پاراستەوەی بنکەی داتا">💾 Backup Database</div>
+                <div class="flow-arrow"></div>
+                <div class="flow-step" style="animation-delay:0.3s" data-en="📊 View Reports" data-ku="📊 بینینی ڕاپۆرتەکان">📊 View Reports</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 3 -->
+      <div class="grid-3">
+        <!-- Recent Attendance -->
+        <div class="card" style="animation-delay:0.6s;grid-column:span 2" id="tableCard">
+          <div class="card-header">
+            <div>
+              <div class="card-title" data-en="Recent Attendance Records" data-ku="تۆمارەکانی ئامادەبوونی نوێ">Recent Attendance Records</div>
+              <div class="card-subtitle" data-en="Latest 6 entries" data-ku="٦ تۆمارەکانی دوایین">Latest 6 entries</div>
+            </div>
+            <div class="card-badge" data-en="Live" data-ku="ڕاستەوخۆ">🔴 Live</div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th data-en="Student" data-ku="قوتابی">Student</th>
+                  <th data-en="Class" data-ku="پۆل">Class</th>
+                  <th data-en="Teacher" data-ku="مامۆستا">Teacher</th>
+                  <th data-en="Status" data-ku="دۆخ">Status</th>
+                  <th data-en="Time" data-ku="کات">Time</th>
+                </tr>
+              </thead>
+              <tbody id="attendanceTable">
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card" style="animation-delay:0.65s">
+          <div class="card-header">
+            <div class="card-title" data-en="Quick Actions" data-ku="کردارە خێراکان">Quick Actions</div>
+          </div>
+          <div class="quick-grid">
+            <div class="quick-btn">
+              <span class="quick-btn-icon">✅</span>
+              <span data-en="Mark Attendance" data-ku="تۆمارکردن">Mark Attendance</span>
+            </div>
+            <div class="quick-btn">
+              <span class="quick-btn-icon">➕</span>
+              <span data-en="Add Student" data-ku="زیادکردنی قوتابی">Add Student</span>
+            </div>
+            <div class="quick-btn">
+              <span class="quick-btn-icon">📊</span>
+              <span data-en="New Grade" data-ku="نمرەی نوێ">New Grade</span>
+            </div>
+            <div class="quick-btn">
+              <span class="quick-btn-icon">🏫</span>
+              <span data-en="New Class" data-ku="پۆلی نوێ">New Class</span>
+            </div>
+            <div class="quick-btn">
+              <span class="quick-btn-icon">📋</span>
+              <span data-en="Report" data-ku="ڕاپۆرت">Report</span>
+            </div>
+            <div class="quick-btn">
+              <span class="quick-btn-icon">💾</span>
+              <span data-en="Backup" data-ku="پاراستەوە">Backup</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 4 -->
+      <div class="grid-2">
+        <!-- Performance -->
+        <div class="card" style="animation-delay:0.7s">
+          <div class="card-header">
+            <div>
+              <div class="card-title" data-en="System Performance" data-ku="ئەنجامی سیستەم">System Performance</div>
+              <div class="card-subtitle" data-en="Non-functional metrics" data-ku="پێوانەکانی سیستەم">Non-functional metrics</div>
+            </div>
+          </div>
+          <div class="perf-bars" id="perfBars">
+            <div class="perf-bar-item">
+              <div class="perf-label" data-en="Security" data-ku="ئەمنیەت">Security</div>
+              <div class="perf-track"><div class="perf-fill" style="background:var(--gradient-1);width:0" data-width="96%"></div></div>
+              <div class="perf-val">96%</div>
+            </div>
+            <div class="perf-bar-item">
+              <div class="perf-label" data-en="Response" data-ku="وەڵامدانەوە">Response</div>
+              <div class="perf-track"><div class="perf-fill" style="background:var(--gradient-2);width:0" data-width="91%"></div></div>
+              <div class="perf-val">91%</div>
+            </div>
+            <div class="perf-bar-item">
+              <div class="perf-label" data-en="DB Optimize" data-ku="باشترکردنی داتا">DB Optimize</div>
+              <div class="perf-track"><div class="perf-fill" style="background:var(--gradient-3);width:0" data-width="88%"></div></div>
+              <div class="perf-val">88%</div>
+            </div>
+            <div class="perf-bar-item">
+              <div class="perf-label" data-en="Scalability" data-ku="فراوانبوون">Scalability</div>
+              <div class="perf-track"><div class="perf-fill" style="background:var(--gradient-4);width:0" data-width="84%"></div></div>
+              <div class="perf-val">84%</div>
+            </div>
+            <div class="perf-bar-item">
+              <div class="perf-label" data-en="AJAX Speed" data-ku="خێرایی AJAX">AJAX Speed</div>
+              <div class="perf-track"><div class="perf-fill" style="background:var(--gradient-1);width:0" data-width="93%"></div></div>
+              <div class="perf-val">93%</div>
+            </div>
+            <div class="perf-bar-item">
+              <div class="perf-label" data-en="CSRF Guard" data-ku="پاراستنی CSRF">CSRF Guard</div>
+              <div class="perf-track"><div class="perf-fill" style="background:var(--gradient-2);width:0" data-width="99%"></div></div>
+              <div class="perf-val">99%</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Activity Timeline -->
+        <div class="card" style="animation-delay:0.75s">
+          <div class="card-header">
+            <div class="card-title" data-en="Recent Activity" data-ku="چالاکیە نوێیەکان">Recent Activity</div>
+          </div>
+          <div class="timeline" id="timeline">
+            <div class="timeline-item" style="animation-delay:0.1s">
+              <div class="timeline-left"><div class="timeline-dot green"></div><div class="timeline-line"></div></div>
+              <div class="timeline-content">
+                <div class="timeline-text" data-en="Attendance marked for CS-101" data-ku="ئامادەبوون تۆمار کرا بۆ CS-101">Attendance marked for CS-101</div>
+                <div class="timeline-time">2 min ago</div>
+              </div>
+            </div>
+            <div class="timeline-item" style="animation-delay:0.15s">
+              <div class="timeline-left"><div class="timeline-dot"></div><div class="timeline-line"></div></div>
+              <div class="timeline-content">
+                <div class="timeline-text" data-en="New student added: Sara Ahmed" data-ku="قوتابیی نوێ زیاد کرا: سارا ئەحمەد">New student added: Sara Ahmed</div>
+                <div class="timeline-time">15 min ago</div>
+              </div>
+            </div>
+            <div class="timeline-item" style="animation-delay:0.2s">
+              <div class="timeline-left"><div class="timeline-dot orange"></div><div class="timeline-line"></div></div>
+              <div class="timeline-content">
+                <div class="timeline-text" data-en="Grade assigned for Math Quiz" data-ku="نمرە دانرا بۆ کوێزی بیرکاری">Grade assigned for Math Quiz</div>
+                <div class="timeline-time">1 hr ago</div>
+              </div>
+            </div>
+            <div class="timeline-item" style="animation-delay:0.25s">
+              <div class="timeline-left"><div class="timeline-dot red"></div><div class="timeline-line"></div></div>
+              <div class="timeline-content">
+                <div class="timeline-text" data-en="3 students marked absent today" data-ku="٣ قوتابی ئەمڕۆ نەبوونیان تۆمار کرا">3 students marked absent today</div>
+                <div class="timeline-time">2 hr ago</div>
+              </div>
+            </div>
+            <div class="timeline-item" style="animation-delay:0.3s">
+              <div class="timeline-left"><div class="timeline-dot green"></div><div class="timeline-line"></div></div>
+              <div class="timeline-content">
+                <div class="timeline-text" data-en="Database backup completed" data-ku="پاراستەوەی بنکەی داتا تەواو بوو">Database backup completed</div>
+                <div class="timeline-time">3 hr ago</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Security Info -->
+      <div class="card" style="animation-delay:0.8s;margin-bottom:24px">
+        <div class="card-header">
+          <div class="card-title" data-en="🔒 Security & Tech Stack" data-ku="🔒 ئەمنیەت و تەکنەلۆجیا">🔒 Security & Tech Stack</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px">
+          <div style="background:var(--bg-card-hover);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;align-items:center;gap:10px">
+            <span style="font-size:22px">🔐</span>
+            <div>
+              <div style="font-size:12px;font-weight:700" data-en="Password Hashing" data-ku="هاش کردنی وشەی نهێنی">Password Hashing</div>
+              <div style="font-size:11px;color:var(--text-secondary)">bcrypt / SHA-256</div>
+            </div>
+          </div>
+          <div style="background:var(--bg-card-hover);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;align-items:center;gap:10px">
+            <span style="font-size:22px">🛡️</span>
+            <div>
+              <div style="font-size:12px;font-weight:700" data-en="Prepared Statements" data-ku="داواکاری پاراستراو">Prepared Statements</div>
+              <div style="font-size:11px;color:var(--text-secondary)">SQL Injection Safe</div>
+            </div>
+          </div>
+          <div style="background:var(--bg-card-hover);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;align-items:center;gap:10px">
+            <span style="font-size:22px">👥</span>
+            <div>
+              <div style="font-size:12px;font-weight:700" data-en="Role-Based Access" data-ku="دەستگەیشتنی پلەبەپلە">Role-Based Access</div>
+              <div style="font-size:11px;color:var(--text-secondary)">Admin/Teacher/Student</div>
+            </div>
+          </div>
+          <div style="background:var(--bg-card-hover);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;align-items:center;gap:10px">
+            <span style="font-size:22px">🔑</span>
+            <div>
+              <div style="font-size:12px;font-weight:700" data-en="Session Management" data-ku="بەڕێوەبردنی دانیشتن">Session Management</div>
+              <div style="font-size:11px;color:var(--text-secondary)">PHP Sessions</div>
+            </div>
+          </div>
+          <div style="background:var(--bg-card-hover);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;align-items:center;gap:10px">
+            <span style="font-size:22px">🔒</span>
+            <div>
+              <div style="font-size:12px;font-weight:700">CSRF Protection</div>
+              <div style="font-size:11px;color:var(--text-secondary)">Token Validation</div>
+            </div>
+          </div>
+          <div style="background:var(--bg-card-hover);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;align-items:center;gap:10px">
+            <span style="font-size:22px">⚡</span>
+            <div>
+              <div style="font-size:12px;font-weight:700">AJAX & Performance</div>
+              <div style="font-size:11px;color:var(--text-secondary)">&lt; 3s Response Time</div>
+            </div>
+          </div>
+          <div style="background:var(--bg-card-hover);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;align-items:center;gap:10px">
+            <span style="font-size:22px">🗄️</span>
+            <div>
+              <div style="font-size:12px;font-weight:700">MySQL Indexed</div>
+              <div style="font-size:11px;color:var(--text-secondary)">Optimized Queries</div>
+            </div>
+          </div>
+          <div style="background:var(--bg-card-hover);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;align-items:center;gap:10px">
+            <span style="font-size:22px">🧩</span>
+            <div>
+              <div style="font-size:12px;font-weight:700" data-en="Modular Structure" data-ku="پێکهاتەی مۆدیوولی">Modular Structure</div>
+              <div style="font-size:11px;color:var(--text-secondary)">HTML/CSS/JS/PHP</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end content -->
+  </main>
+</div>
+
+<script>
+  // ── Date ──
+  const now = new Date();
+  document.getElementById('dateDisplay').textContent = now.toLocaleDateString('en-US', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+
+  // ── Theme ──
+  function toggleTheme() {
+    const html = document.documentElement;
+    const isDark = html.getAttribute('data-theme') === 'dark';
+    html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+    document.getElementById('themeBtn').textContent = isDark ? '☀️' : '🌙';
+  }
+
+  // ── Language ──
+  function setLang(lang) {
+    document.documentElement.setAttribute('data-lang', lang);
+    document.querySelectorAll('[data-' + lang + ']').forEach(el => {
+      const val = el.getAttribute('data-' + lang);
+      if (val) el.textContent = val;
+    });
+    document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('.lang-btn[onclick="setLang(\'' + lang + '\')"]').classList.add('active');
+    // Update logo subtext
+    document.getElementById('logoSubtext').textContent = lang === 'ku' ? 'سیستەمی ئامادەبوون' : 'Attendance Management';
+    if (lang === 'ku') {
+      document.body.style.direction = 'rtl';
+    } else {
+      document.body.style.direction = 'ltr';
+    }
+  }
+
+  // ── Nav active ──
+  function setActive(el) {
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  // ── Counters ──
+  function animateCounter(el) {
+    const target = parseInt(el.getAttribute('data-target'));
+    const duration = 1800;
+    const step = target / (duration / 16);
+    let current = 0;
+    const timer = setInterval(() => {
+      current += step;
+      if (current >= target) { current = target; clearInterval(timer); }
+      el.textContent = Math.floor(current).toLocaleString();
+    }, 16);
+  }
+  document.querySelectorAll('.counter').forEach(animateCounter);
+
+  // ── Progress bars ──
+  setTimeout(() => {
+    document.querySelectorAll('[data-width]').forEach(el => {
+      el.style.width = el.getAttribute('data-width');
+    });
+  }, 300);
+
+  // ── Donut ──
+  setTimeout(() => {
+    const circumference = 2 * Math.PI * 44; // ~276.5
+    const el = document.getElementById('donutPresent');
+    const pct = 0.94;
+    el.style.strokeDasharray = circumference;
+    el.style.strokeDashoffset = circumference * (1 - pct);
+  }, 400);
+
+  // ── Bar chart ──
+  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const dayData = [
+    {p:120, a:8, l:5}, {p:118, a:10, l:3}, {p:122, a:6, l:4},
+    {p:115, a:12, l:6}, {p:119, a:7, l:5}, {p:110, a:15, l:8}
+  ];
+  const maxVal = 130;
+  const chart = document.getElementById('barChart');
+  days.forEach((d, i) => {
+    const data = dayData[i];
+    const group = document.createElement('div');
+    group.className = 'bar-group';
+    const ph = Math.round((data.p / maxVal) * 120);
+    const ah = Math.round((data.a / maxVal) * 120);
+    const lh = Math.round((data.l / maxVal) * 120);
+    group.innerHTML = `
+      <div class="bars">
+        <div class="bar present" data-val="${data.p} Present" style="height:0;transition:height 1.2s ease ${0.1+i*0.1}s"></div>
+        <div class="bar absent" data-val="${data.a} Absent" style="height:0;transition:height 1.2s ease ${0.15+i*0.1}s"></div>
+        <div class="bar late" data-val="${data.l} Late" style="height:0;transition:height 1.2s ease ${0.2+i*0.1}s"></div>
+      </div>
+      <div class="bar-label">${d}</div>`;
+    chart.appendChild(group);
+    setTimeout(() => {
+      group.querySelectorAll('.bar')[0].style.height = ph + 'px';
+      group.querySelectorAll('.bar')[1].style.height = ah + 'px';
+      group.querySelectorAll('.bar')[2].style.height = lh + 'px';
+    }, 200);
+  });
+
+  // ── Attendance Table ──
+  const avatarColors = ['#6c63ff','#00d4ff','#00e676','#ff9800','#ff4757','#ff6b9d'];
+  const tableData = [
+    {name:'Ahmed Hassan', class:'CS-101', teacher:'Dr. Sara', status:'present', time:'08:02 AM'},
+    {name:'Lana Omar', class:'Math-202', teacher:'Mr. Karim', status:'late', time:'08:47 AM'},
+    {name:'Rahim Ali', class:'CS-101', teacher:'Dr. Sara', status:'absent', time:'—'},
+    {name:'Nora Khalid', class:'Phys-301', teacher:'Ms. Dana', status:'present', time:'07:58 AM'},
+    {name:'Soran Jabar', class:'Math-202', teacher:'Mr. Karim', status:'present', time:'08:05 AM'},
+    {name:'Tara Barzan', class:'Bio-101', teacher:'Dr. Layla', status:'late', time:'09:10 AM'},
+  ];
+  const tbody = document.getElementById('attendanceTable');
+  tableData.forEach((r, i) => {
+    const initials = r.name.split(' ').map(n=>n[0]).join('');
+    const tr = document.createElement('tr');
+    tr.style.animationDelay = (0.05*i) + 's';
+    const statusLabels = {present: 'Present', absent: 'Absent', late: 'Late'};
+    tr.innerHTML = `
+      <td><div class="td-name">
+        <div class="td-avatar" style="background:${avatarColors[i]}">${initials}</div>
+        ${r.name}
+      </div></td>
+      <td><span class="tag">${r.class}</span></td>
+      <td style="color:var(--text-secondary);font-size:12px">${r.teacher}</td>
+      <td><span class="badge ${r.status}">${statusLabels[r.status]}</span></td>
+      <td style="color:var(--text-muted);font-size:12px">${r.time}</td>`;
+    tbody.appendChild(tr);
+  });
+
+</script>
+</body>
+</html>
