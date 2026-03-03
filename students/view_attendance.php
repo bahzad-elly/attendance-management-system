@@ -23,12 +23,7 @@ if (!$classroom_id) {
 }
 
 try {
-    $stmt = $pdo->prepare("
-        SELECT c.class_name 
-        FROM classrooms c
-        JOIN classroom_students cs ON c.id = cs.classroom_id
-        WHERE c.id = :classroom_id AND cs.student_id = :student_id
-    ");
+    $stmt = $pdo->prepare("SELECT c.class_name FROM classrooms c JOIN classroom_students cs ON c.id = cs.classroom_id WHERE c.id = :classroom_id AND cs.student_id = :student_id");
     $stmt->execute([':classroom_id' => $classroom_id, ':student_id' => $student_id]);
     $classroom = $stmt->fetch();
 
@@ -42,11 +37,16 @@ try {
 }
 
 try {
+    $stmt = $pdo->prepare("SELECT COUNT(*) as total_lessons FROM lessons WHERE classroom_id = :classroom_id");
+    $stmt->execute([':classroom_id' => $classroom_id]);
+    $total_lessons = $stmt->fetch()['total_lessons'];
+
     $stmt = $pdo->prepare("
-        SELECT attendance_date, status 
-        FROM attendance 
-        WHERE classroom_id = :classroom_id AND student_id = :student_id
-        ORDER BY attendance_date DESC
+        SELECT l.lesson_title, l.lesson_date, a.status 
+        FROM lessons l 
+        LEFT JOIN attendance a ON l.id = a.lesson_id AND a.student_id = :student_id
+        WHERE l.classroom_id = :classroom_id
+        ORDER BY l.lesson_date DESC, l.id DESC
     ");
     $stmt->execute([':classroom_id' => $classroom_id, ':student_id' => $student_id]);
     $attendance_records = $stmt->fetchAll();
@@ -64,6 +64,7 @@ try {
 } catch (PDOException $e) {
     $error = "Failed to load attendance records.";
     $attendance_records = [];
+    $total_lessons = 0;
 }
 ?>
 <!DOCTYPE html>
@@ -105,48 +106,27 @@ try {
             --late-text: #fff3cd;
         }
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            transition: background-color 0.3s, color 0.3s;
-        }
-
-        .navbar {
-            background-color: var(--nav-bg);
-            padding: 15px 20px;
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
+        body { background-color: var(--bg-color); color: var(--text-color); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; transition: background-color 0.3s, color 0.3s; }
+        .navbar { background-color: var(--nav-bg); padding: 15px 20px; color: white; display: flex; justify-content: space-between; align-items: center; }
         .navbar a { color: white; text-decoration: none; margin-right: 15px; }
-
         .container { padding: 30px; max-width: 1000px; margin: 0 auto; }
-
         .controls { display: flex; justify-content: space-between; margin-bottom: 20px; }
         .controls a, .controls button { text-decoration: none; padding: 5px 10px; background: var(--card-bg); color: var(--text-color); border: 1px solid var(--input-border); border-radius: 5px; cursor: pointer; font-size: 14px; }
-
         .card { background: var(--card-bg); padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
-
-        .summary-boxes { display: flex; gap: 15px; margin-bottom: 20px; }
-        .summary-box { flex: 1; padding: 15px; text-align: center; border-radius: 5px; font-weight: bold; border: 1px solid var(--input-border); }
-        
+        .summary-boxes { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;}
+        .summary-box { flex: 1; padding: 15px; text-align: center; border-radius: 5px; font-weight: bold; border: 1px solid var(--input-border); min-width: 120px;}
+        .box-total { background-color: var(--table-header-bg); color: var(--text-color); border-color: var(--input-border); }
         .box-present { background-color: var(--present-bg); color: var(--present-text); border-color: var(--present-text); }
         .box-absent { background-color: var(--absent-bg); color: var(--absent-text); border-color: var(--absent-text); }
         .box-late { background-color: var(--late-bg); color: var(--late-text); border-color: var(--late-text); }
-
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--table-border); }
         th { background-color: var(--table-header-bg); font-weight: bold; }
-
         .badge { padding: 5px 10px; border-radius: 15px; font-size: 12px; font-weight: bold; text-transform: uppercase; }
         .badge-present { background-color: var(--present-bg); color: var(--present-text); }
         .badge-absent { background-color: var(--absent-bg); color: var(--absent-text); }
         .badge-late { background-color: var(--late-bg); color: var(--late-text); }
-
+        .badge-none { background-color: var(--table-border); color: var(--text-color); }
         .back-link { display: inline-block; margin-bottom: 15px; color: var(--text-color); text-decoration: none; }
         .back-link:hover { text-decoration: underline; }
     </style>
@@ -180,12 +160,16 @@ try {
         <?php endif; ?>
 
         <div class="summary-boxes">
+            <div class="summary-box box-total">
+                <div>Total Lessons</div>
+                <div style="font-size: 24px;"><?php echo $total_lessons; ?></div>
+            </div>
             <div class="summary-box box-present">
-                <div>Present</div>
+                <div>Attended (Present)</div>
                 <div style="font-size: 24px;"><?php echo $present_count; ?></div>
             </div>
             <div class="summary-box box-absent">
-                <div>Absent</div>
+                <div>Missed (Absent)</div>
                 <div style="font-size: 24px;"><?php echo $absent_count; ?></div>
             </div>
             <div class="summary-box box-late">
@@ -196,30 +180,36 @@ try {
     </div>
 
     <div class="card">
-        <h3>Attendance History</h3>
+        <h3>Lesson History</h3>
         <?php if (count($attendance_records) > 0): ?>
             <table>
                 <thead>
                     <tr>
                         <th>Date</th>
-                        <th>Status</th>
+                        <th>Lesson Title</th>
+                        <th>My Status</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php foreach ($attendance_records as $record): ?>
                         <tr>
-                            <td><?php echo htmlspecialchars(date('F j, Y', strtotime($record['attendance_date']))); ?></td>
+                            <td><?php echo htmlspecialchars(date('M j, Y', strtotime($record['lesson_date']))); ?></td>
+                            <td><?php echo htmlspecialchars($record['lesson_title']); ?></td>
                             <td>
-                                <span class="badge badge-<?php echo htmlspecialchars($record['status']); ?>">
-                                    <?php echo htmlspecialchars($record['status']); ?>
-                                </span>
+                                <?php if ($record['status']): ?>
+                                    <span class="badge badge-<?php echo htmlspecialchars($record['status']); ?>">
+                                        <?php echo htmlspecialchars($record['status']); ?>
+                                    </span>
+                                <?php else: ?>
+                                    <span class="badge badge-none">Not Marked</span>
+                                <?php endif; ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
             </table>
         <?php else: ?>
-            <p>No attendance records found for this class.</p>
+            <p>No lessons have been created for this class yet.</p>
         <?php endif; ?>
     </div>
 </div>
@@ -227,17 +217,13 @@ try {
 <script>
     const toggleBtn = document.getElementById('theme-toggle');
     const currentTheme = localStorage.getItem('theme') || 'light';
-
     document.documentElement.setAttribute('data-theme', currentTheme);
-
     toggleBtn.addEventListener('click', () => {
         let theme = document.documentElement.getAttribute('data-theme');
         let newTheme = theme === 'dark' ? 'light' : 'dark';
-        
         document.documentElement.setAttribute('data-theme', newTheme);
         localStorage.setItem('theme', newTheme);
     });
 </script>
-
 </body>
 </html>

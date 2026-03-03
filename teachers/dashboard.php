@@ -156,6 +156,7 @@ try {
     <div>
         <a href="dashboard.php">Dashboard</a>
         <a href="../logout.php">Logout</a>
+        <a href="view_attendance.php">view attendance</a>
     </div>
     <div>Teacher Panel</div>
 </div>

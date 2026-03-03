@@ -45,11 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->execute([':classroom_id' => $classroom_id, ':student_id' => $student_id]);
                 $success = "Student enrolled successfully.";
             } catch (PDOException $e) {
-                if ($e->getCode() == 23000) {
-                    $error = "Student is already enrolled in this class.";
-                } else {
-                    $error = "Failed to add student.";
-                }
+                $error = "Failed to add student.";
             }
         }
     } elseif (isset($_POST['action']) && $_POST['action'] === 'remove_student') {
@@ -63,34 +59,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error = "Failed to remove student.";
             }
         }
+    } elseif (isset($_POST['action']) && $_POST['action'] === 'add_lesson') {
+        $lesson_title = htmlspecialchars(trim($_POST['lesson_title']));
+        $lesson_date = $_POST['lesson_date'];
+        
+        if (!empty($lesson_title) && !empty($lesson_date)) {
+            try {
+                $stmt = $pdo->prepare("INSERT INTO lessons (classroom_id, lesson_title, lesson_date) VALUES (:classroom_id, :lesson_title, :lesson_date)");
+                $stmt->execute([':classroom_id' => $classroom_id, ':lesson_title' => $lesson_title, ':lesson_date' => $lesson_date]);
+                $success = "Lesson created successfully.";
+            } catch (PDOException $e) {
+                $error = "Failed to create lesson.";
+            }
+        }
     }
 }
 
 try {
-    $stmt = $pdo->prepare("
-        SELECT u.id, u.name, u.email 
-        FROM users u 
-        JOIN classroom_students cs ON u.id = cs.student_id 
-        WHERE cs.classroom_id = :classroom_id
-        ORDER BY u.name ASC
-    ");
+    $stmt = $pdo->prepare("SELECT u.id, u.name, u.email FROM users u JOIN classroom_students cs ON u.id = cs.student_id WHERE cs.classroom_id = :classroom_id ORDER BY u.name ASC");
     $stmt->execute([':classroom_id' => $classroom_id]);
     $enrolled_students = $stmt->fetchAll();
 
-    $stmt = $pdo->prepare("
-        SELECT id, name, email 
-        FROM users 
-        WHERE role = 'student' 
-        AND id NOT IN (SELECT student_id FROM classroom_students WHERE classroom_id = :classroom_id)
-        ORDER BY name ASC
-    ");
+    $stmt = $pdo->prepare("SELECT id, name, email FROM users WHERE role = 'student' AND id NOT IN (SELECT student_id FROM classroom_students WHERE classroom_id = :classroom_id) ORDER BY name ASC");
     $stmt->execute([':classroom_id' => $classroom_id]);
     $available_students = $stmt->fetchAll();
 
+    $stmt = $pdo->prepare("SELECT * FROM lessons WHERE classroom_id = :classroom_id ORDER BY lesson_date DESC, id DESC");
+    $stmt->execute([':classroom_id' => $classroom_id]);
+    $lessons = $stmt->fetchAll();
+
 } catch (PDOException $e) {
-    $error = "Failed to load students.";
+    $error = "Failed to load data.";
     $enrolled_students = [];
     $available_students = [];
+    $lessons = [];
 }
 ?>
 <!DOCTYPE html>
@@ -132,50 +134,28 @@ try {
             --table-border: #444444;
         }
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            transition: background-color 0.3s, color 0.3s;
-        }
-
-        .navbar {
-            background-color: var(--nav-bg);
-            padding: 15px 20px;
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
+        body { background-color: var(--bg-color); color: var(--text-color); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; transition: background-color 0.3s, color 0.3s; }
+        .navbar { background-color: var(--nav-bg); padding: 15px 20px; color: white; display: flex; justify-content: space-between; align-items: center; }
         .navbar a { color: white; text-decoration: none; margin-right: 15px; }
-
         .container { padding: 30px; max-width: 1000px; margin: 0 auto; }
-
         .controls { display: flex; justify-content: space-between; margin-bottom: 20px; }
         .controls a, .controls button { text-decoration: none; padding: 5px 10px; background: var(--card-bg); color: var(--text-color); border: 1px solid var(--input-border); border-radius: 5px; cursor: pointer; font-size: 14px; }
-
         .card { background: var(--card-bg); padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
-
         .top-actions { display: flex; gap: 15px; margin-bottom: 20px; }
         .top-actions a { flex: 1; text-align: center; padding: 15px; background-color: var(--btn-action); color: white; text-decoration: none; border-radius: 5px; font-weight: bold; }
         .top-actions a:hover { background-color: var(--btn-action-hover); }
-
-        .form-group { display: flex; gap: 10px; align-items: center; margin-bottom: 15px; }
-        select { flex: 1; padding: 10px; border: 1px solid var(--input-border); border-radius: 5px; background-color: var(--input-bg); color: var(--text-color); }
+        .form-row { display: flex; gap: 10px; align-items: center; margin-bottom: 15px; flex-wrap: wrap;}
+        input, select { flex: 1; padding: 10px; border: 1px solid var(--input-border); border-radius: 5px; background-color: var(--input-bg); color: var(--text-color); }
         button.submit-btn { padding: 10px 20px; background-color: var(--btn-bg); color: var(--btn-text); border: none; border-radius: 5px; cursor: pointer; }
         button.submit-btn:hover { background-color: var(--btn-hover); }
-
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--table-border); }
         th { background-color: var(--table-header-bg); font-weight: bold; }
-        
         button.btn-remove { padding: 5px 10px; background-color: var(--btn-danger); color: white; border: none; border-radius: 3px; cursor: pointer; }
-        button.btn-remove:hover { background-color: var(--btn-danger-hover); }
-
         .alert-success { background: #d4edda; color: #155724; padding: 10px; border-radius: 5px; margin-bottom: 15px; }
         .alert-error { background: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; margin-bottom: 15px; }
+        .lesson-link { font-weight: bold; color: var(--btn-bg); text-decoration: none; }
+        .lesson-link:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -199,59 +179,68 @@ try {
 
     <div class="card">
         <h2>Classroom: <?php echo htmlspecialchars($classroom['class_name']); ?></h2>
-        
         <div class="top-actions">
-            <a href="mark_attendance.php?id=<?php echo $classroom_id; ?>">📋 Mark Attendance</a>
             <a href="assign_grades.php?id=<?php echo $classroom_id; ?>">📝 Assign Grades</a>
         </div>
     </div>
 
+    <?php if (!empty($success)): ?><div class="alert-success"><?php echo $success; ?></div><?php endif; ?>
+    <?php if (!empty($error)): ?><div class="alert-error"><?php echo $error; ?></div><?php endif; ?>
+
     <div class="card">
-        <h3>Enroll New Student</h3>
-        
-        <?php if (!empty($success)): ?>
-            <div class="alert-success"><?php echo $success; ?></div>
-        <?php endif; ?>
+        <h3>Lessons & Attendance</h3>
+        <form action="manage_classroom.php?id=<?php echo $classroom_id; ?>" method="POST">
+            <input type="hidden" name="action" value="add_lesson">
+            <div class="form-row">
+                <input type="text" name="lesson_title" placeholder="Lesson Title (e.g. Chapter 1)" required>
+                <input type="date" name="lesson_date" value="<?php echo date('Y-m-d'); ?>" required>
+                <button type="submit" class="submit-btn">Create Lesson</button>
+            </div>
+        </form>
 
-        <?php if (!empty($error)): ?>
-            <div class="alert-error"><?php echo $error; ?></div>
+        <?php if (count($lessons) > 0): ?>
+            <table>
+                <thead><tr><th>Date</th><th>Lesson Title</th><th>Action</th></tr></thead>
+                <tbody>
+                    <?php foreach ($lessons as $lesson): ?>
+                        <tr>
+                            <td><?php echo htmlspecialchars($lesson['lesson_date']); ?></td>
+                            <td><?php echo htmlspecialchars($lesson['lesson_title']); ?></td>
+                            <td><a href="mark_attendance.php?lesson_id=<?php echo $lesson['id']; ?>" class="lesson-link">📋 Mark Attendance</a></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php else: ?>
+            <p>No lessons created yet.</p>
         <?php endif; ?>
+    </div>
 
+    <div class="card">
+        <h3>Enrolled Students (<?php echo count($enrolled_students); ?>)</h3>
         <form action="manage_classroom.php?id=<?php echo $classroom_id; ?>" method="POST">
             <input type="hidden" name="action" value="add_student">
-            <div class="form-group">
+            <div class="form-row">
                 <select name="student_id" required>
                     <option value="" disabled selected>Select a student to enroll...</option>
                     <?php foreach ($available_students as $student): ?>
-                        <option value="<?php echo $student['id']; ?>">
-                            <?php echo htmlspecialchars($student['name'] . ' (' . $student['email'] . ')'); ?>
-                        </option>
+                        <option value="<?php echo $student['id']; ?>"><?php echo htmlspecialchars($student['name'] . ' (' . $student['email'] . ')'); ?></option>
                     <?php endforeach; ?>
                 </select>
                 <button type="submit" class="submit-btn">Add Student</button>
             </div>
         </form>
-    </div>
 
-    <div class="card">
-        <h3>Enrolled Students (<?php echo count($enrolled_students); ?>)</h3>
-        
         <?php if (count($enrolled_students) > 0): ?>
             <table>
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
+                <thead><tr><th>Name</th><th>Email</th><th>Actions</th></tr></thead>
                 <tbody>
                     <?php foreach ($enrolled_students as $student): ?>
                         <tr>
                             <td><?php echo htmlspecialchars($student['name']); ?></td>
                             <td><?php echo htmlspecialchars($student['email']); ?></td>
                             <td>
-                                <form action="manage_classroom.php?id=<?php echo $classroom_id; ?>" method="POST" onsubmit="return confirm('Remove this student from the class?');" style="margin:0;">
+                                <form action="manage_classroom.php?id=<?php echo $classroom_id; ?>" method="POST" onsubmit="return confirm('Remove student?');" style="margin:0;">
                                     <input type="hidden" name="action" value="remove_student">
                                     <input type="hidden" name="student_id" value="<?php echo $student['id']; ?>">
                                     <button type="submit" class="btn-remove">Remove</button>
@@ -261,8 +250,6 @@ try {
                     <?php endforeach; ?>
                 </tbody>
             </table>
-        <?php else: ?>
-            <p>No students enrolled yet.</p>
         <?php endif; ?>
     </div>
 </div>
@@ -270,17 +257,13 @@ try {
 <script>
     const toggleBtn = document.getElementById('theme-toggle');
     const currentTheme = localStorage.getItem('theme') || 'light';
-
     document.documentElement.setAttribute('data-theme', currentTheme);
-
     toggleBtn.addEventListener('click', () => {
         let theme = document.documentElement.getAttribute('data-theme');
         let newTheme = theme === 'dark' ? 'light' : 'dark';
-        
         document.documentElement.setAttribute('data-theme', newTheme);
         localStorage.setItem('theme', newTheme);
     });
 </script>
-
 </body>
 </html>

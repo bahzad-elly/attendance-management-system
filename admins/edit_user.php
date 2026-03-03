@@ -26,6 +26,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = filter_var(trim($_POST['email']), FILTER_SANITIZE_EMAIL);
     $role = $_POST['role'];
     $password = $_POST['password'];
+    
+    $phone = htmlspecialchars(trim($_POST['phone']));
+    $date_of_birth = !empty($_POST['date_of_birth']) ? $_POST['date_of_birth'] : null;
+    $address = htmlspecialchars(trim($_POST['address']));
 
     $allowed_roles = ['admin', 'teacher', 'student'];
     if (!in_array($role, $allowed_roles)) {
@@ -35,20 +39,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         if (!empty($password)) {
             $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-            $stmt = $pdo->prepare("UPDATE users SET name = :name, email = :email, role = :role, password_hash = :password_hash WHERE id = :id");
+            $stmt = $pdo->prepare("UPDATE users SET name = :name, email = :email, role = :role, phone = :phone, date_of_birth = :date_of_birth, address = :address, password_hash = :password_hash WHERE id = :id");
             $stmt->execute([
                 ':name' => $name,
                 ':email' => $email,
                 ':role' => $role,
+                ':phone' => $phone,
+                ':date_of_birth' => $date_of_birth,
+                ':address' => $address,
                 ':password_hash' => $hashed_password,
                 ':id' => $user_id
             ]);
         } else {
-            $stmt = $pdo->prepare("UPDATE users SET name = :name, email = :email, role = :role WHERE id = :id");
+            $stmt = $pdo->prepare("UPDATE users SET name = :name, email = :email, role = :role, phone = :phone, date_of_birth = :date_of_birth, address = :address WHERE id = :id");
             $stmt->execute([
                 ':name' => $name,
                 ':email' => $email,
                 ':role' => $role,
+                ':phone' => $phone,
+                ':date_of_birth' => $date_of_birth,
+                ':address' => $address,
                 ':id' => $user_id
             ]);
         }
@@ -63,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 try {
-    $stmt = $pdo->prepare("SELECT name, email, role FROM users WHERE id = :id");
+    $stmt = $pdo->prepare("SELECT name, email, role, phone, date_of_birth, address FROM users WHERE id = :id");
     $stmt->execute([':id' => $user_id]);
     $user = $stmt->fetch();
 
@@ -105,88 +115,20 @@ try {
             --nav-bg: #1a1a1a;
         }
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            transition: background-color 0.3s, color 0.3s;
-        }
-
-        .navbar {
-            background-color: var(--nav-bg);
-            padding: 15px 20px;
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .navbar a {
-            color: white;
-            text-decoration: none;
-            margin-right: 15px;
-        }
-
-        .container {
-            background: var(--card-bg);
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 400px;
-            margin: 50px auto;
-        }
-
+        body { background-color: var(--bg-color); color: var(--text-color); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; transition: background-color 0.3s, color 0.3s; }
+        .navbar { background-color: var(--nav-bg); padding: 15px 20px; color: white; display: flex; justify-content: space-between; align-items: center; }
+        .navbar a { color: white; text-decoration: none; margin-right: 15px; }
+        .container { background: var(--card-bg); padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 500px; margin: 50px auto; }
         h2 { text-align: center; margin-bottom: 20px; }
-
         .form-group { margin-bottom: 15px; }
-        
         label { display: block; margin-bottom: 5px; font-weight: bold; }
-        
-        input, select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid var(--input-border);
-            border-radius: 5px;
-            background-color: var(--input-bg);
-            color: var(--text-color);
-            box-sizing: border-box;
-        }
-
-        button.submit-btn {
-            width: 100%;
-            padding: 10px;
-            background-color: var(--btn-bg);
-            color: var(--btn-text);
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            cursor: pointer;
-            margin-top: 10px;
-        }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--input-border); border-radius: 5px; background-color: var(--input-bg); color: var(--text-color); box-sizing: border-box; font-family: inherit; }
+        button.submit-btn { width: 100%; padding: 10px; background-color: var(--btn-bg); color: var(--btn-text); border: none; border-radius: 5px; font-size: 16px; cursor: pointer; margin-top: 10px; }
         button.submit-btn:hover { background-color: var(--btn-hover); }
-
-        .controls {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
-        
-        .controls a, .controls button {
-            text-decoration: none;
-            padding: 5px 10px;
-            background: var(--input-bg);
-            color: var(--text-color);
-            border: 1px solid var(--input-border);
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
+        .controls { display: flex; justify-content: space-between; margin-bottom: 20px; }
+        .controls a, .controls button { text-decoration: none; padding: 5px 10px; background: var(--input-bg); color: var(--text-color); border: 1px solid var(--input-border); border-radius: 5px; cursor: pointer; font-size: 14px; }
         .alert-success { background: #d4edda; color: #155724; padding: 10px; border-radius: 5px; margin-bottom: 15px; text-align: center; }
         .alert-error { background: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; margin-bottom: 15px; text-align: center; }
-        
         .back-link { display: block; text-align: center; margin-top: 15px; color: var(--text-color); text-decoration: none; }
         .back-link:hover { text-decoration: underline; }
     </style>
@@ -213,13 +155,8 @@ try {
 
     <h2>Edit User</h2>
 
-    <?php if (!empty($success)): ?>
-        <div class="alert-success"><?php echo $success; ?></div>
-    <?php endif; ?>
-
-    <?php if (!empty($error)): ?>
-        <div class="alert-error"><?php echo $error; ?></div>
-    <?php endif; ?>
+    <?php if (!empty($success)): ?><div class="alert-success"><?php echo $success; ?></div><?php endif; ?>
+    <?php if (!empty($error)): ?><div class="alert-error"><?php echo $error; ?></div><?php endif; ?>
 
     <form action="edit_user.php?id=<?php echo $user_id; ?>" method="POST">
         <div class="form-group">
@@ -231,10 +168,20 @@ try {
             <label>Email</label>
             <input type="email" name="email" value="<?php echo htmlspecialchars($user['email']); ?>" required>
         </div>
+        
+        <div class="form-group">
+            <label>Phone Number</label>
+            <input type="tel" name="phone" value="<?php echo htmlspecialchars((string)$user['phone']); ?>">
+        </div>
 
         <div class="form-group">
-            <label>New Password (leave blank to keep current)</label>
-            <input type="password" name="password">
+            <label>Date of Birth</label>
+            <input type="date" name="date_of_birth" value="<?php echo htmlspecialchars((string)$user['date_of_birth']); ?>">
+        </div>
+
+        <div class="form-group">
+            <label>Address</label>
+            <textarea name="address" rows="3"><?php echo htmlspecialchars((string)$user['address']); ?></textarea>
         </div>
 
         <div class="form-group">
@@ -246,6 +193,11 @@ try {
             </select>
         </div>
 
+        <div class="form-group">
+            <label>New Password (leave blank to keep current)</label>
+            <input type="password" name="password">
+        </div>
+
         <button type="submit" class="submit-btn">Update User</button>
     </form>
     
@@ -255,17 +207,13 @@ try {
 <script>
     const toggleBtn = document.getElementById('theme-toggle');
     const currentTheme = localStorage.getItem('theme') || 'light';
-
     document.documentElement.setAttribute('data-theme', currentTheme);
-
     toggleBtn.addEventListener('click', () => {
         let theme = document.documentElement.getAttribute('data-theme');
         let newTheme = theme === 'dark' ? 'light' : 'dark';
-        
         document.documentElement.setAttribute('data-theme', newTheme);
         localStorage.setItem('theme', newTheme);
     });
 </script>
-
 </body>
 </html>

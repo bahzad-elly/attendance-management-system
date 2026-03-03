@@ -152,6 +152,7 @@ try {
     <div class="dashboard-links">
         <a href="register.php">➕ Create New User</a>
         <a href="manage_users.php">👥 Manage Users</a>
+        <a href="manage_classrooms.php">🏫 Manage Classrooms</a>
     </div>
 </div>
 
